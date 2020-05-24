@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"errors"
 	//"strconv"
 )
 
@@ -34,6 +35,68 @@ func fact(n int) int {
 	return n * fact(n - 1)
 }
 
+func passByVal(i int) {
+	i++;
+}
+func passByRef(i *int) {
+	*i++
+}
+
+type animal interface {
+	makeSound() string
+	tellMeYourSize() string
+}
+
+type dog struct {
+	name string
+	size string
+}
+
+type cat struct {
+	name string
+	size string
+}
+
+func newDog(name, size string) *dog {
+	d := dog{name: name, size: size}
+	return &d
+}
+
+func (d *dog) makeSound() string {
+	return "Bark"
+}
+
+func (c *cat) makeSound() string {
+	return "Meow"
+}
+
+func (d *dog) tellMeYourSize() string {
+	s := fmt.Sprintf("I am %s!\n", d.size)
+	return s
+}
+
+func (c *cat) tellMeYourSize() string {
+	s := fmt.Sprintf("I am %s!\n", c.size)
+	return s
+}
+
+func animalRunner(a animal) {
+	fmt.Println(a.makeSound())
+	fmt.Println(a.tellMeYourSize())
+}
+
+func returningANumberWithAnError() (int, error) {
+	return 1, errors.New("error")
+}
+
+type intArgError stuct {
+	int arg
+	prob string
+}
+
+func (e *intArgError) Error() string {
+	return fmt.Sprintf("%d - %s", e.arg, e.prob)
+}
 
 func main() {
 	// 1. Hello World
@@ -206,5 +269,30 @@ func main() {
 	fmt.Println(anotherNextInt()) // 1, new state separate from nextInt()*/
 
 	// 13. Recursion
-	fmt.Println(fact(1))
+	//fmt.Println(fact(1))
+
+	// 14. Pointers
+	/*i := 0
+	fmt.Printf("i is now %d\n", i)
+	fmt.Println("Passing by value, incrementing by 1...")
+	passByVal(i)
+	fmt.Printf("i is now %d\n", i)
+	fmt.Println("Passing by reference, incrementing by 1...")
+	passByRef(&i)
+	fmt.Printf("i is now %d\n", i)*/
+
+	// 15. Structs
+	//f := newDog("Fido", "medium")
+	/*fmt.Println(a)*/
+	
+	// 16. Methods
+	//fmt.Printf("%s makes a %s sound\n", f.name, f.makeSound())
+
+	// 17. Interfaces
+	//c := cat{"Mittens", "small"}
+	//animalRunner(f)
+	//animalRunner(&c)
+
+	// 18. Errors
+	//fmt.Println(returningANumberWithAnError())
 }
