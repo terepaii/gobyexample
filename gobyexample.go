@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"errors"
+	"time"
 	//"strconv"
 )
 
@@ -89,13 +90,36 @@ func returningANumberWithAnError() (int, error) {
 	return 1, errors.New("error")
 }
 
-type intArgError stuct {
+/*type intArgError stuct {
 	int arg
 	prob string
+}*/
+
+
+/*func (e *intArgError) Error() string {
+	return fmt.Sprintf("%d - %s", e.arg, e.prob)
+}*/
+
+func incrementBy(n *int, incBy int, syncType string) {
+	*n += incBy
+	fmt.Println(syncType, *n)
 }
 
-func (e *intArgError) Error() string {
-	return fmt.Sprintf("%d - %s", e.arg, e.prob)
+func worker(val int, done chan bool) {
+	fmt.Printf("I am worker %d..\n", val)
+	time.Sleep(time.Second)
+	fmt.Printf("I am worker %d and I am done...\n", val)
+	
+	done <- true
+}
+
+func ping(pings chan<- string) {
+	pings <- "ping"
+}
+
+func pong(pings <-chan string, pongs chan<- string) {
+	ping := <-pings
+	pongs <- ping
 }
 
 func main() {
@@ -295,4 +319,73 @@ func main() {
 
 	// 18. Errors
 	//fmt.Println(returningANumberWithAnError())
+
+	// 19. Goroutines
+	/*i :=  0
+	incrementBy(&i, 10, "sync")
+	go incrementBy(&i, 5, "async")
+	for j := 0; j < 10; j++ {
+		go incrementBy(&i, j, "async")
+		go func(msg string) {
+			fmt.Println(msg)
+		}("going")
+	}
+	time.Sleep(time.Second)
+	fmt.Println("done")*/
+
+	// 20. Channels
+
+	/*messages := make(chan int)
+
+	go func() {messages <- 200}()
+
+	fmt.Println(<-messages)
+	//fmt.Println(<-messages)
+
+	done := make(chan bool, 3)
+	go worker(1, done)
+	go worker(2, done)
+	go worker(3, done)
+
+	fmt.Println(<-done)
+	fmt.Println(<-done)
+	fmt.Println(<-done)
+
+	pings := make(chan string, 1)
+	pongs := make(chan string, 1)
+	ping(pings)
+	pong(pings, pongs)
+
+	fmt.Println(<-pongs)*/
+
+	// 21. Select
+	/*c1 := make(chan string)
+	c2 := make(chan string)
+	c3 := make(chan string)
+
+	go func() {
+		time.Sleep(1 * time.Second)
+		c1 <- "c1"
+	}()
+
+	go func() {
+		time.Sleep(3 * time.Second)
+		c2 <- "c2"
+	}()
+
+	go func() {
+		time.Sleep(2 * time.Second)
+		c3 <- "c3"
+	}()
+
+	for i:= 0; i < 3; i++ {
+		select {
+		case msg1 := <-c1:
+			fmt.Println("received", msg1)
+		case msg2 := <-c2:
+			fmt.Println("received", msg2)
+		case msg3 := <- c3:
+			fmt.Println("received", msg3)
+		}	
+	}*/
 }
