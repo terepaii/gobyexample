@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"errors"
 	"time"
+	"sync"
+	"sync/atomic"
+	"math/rand"
 	//"strconv"
 )
 
@@ -105,12 +108,23 @@ func incrementBy(n *int, incBy int, syncType string) {
 	fmt.Println(syncType, *n)
 }
 
-func worker(val int, done chan bool) {
+/*func worker(val int, done chan bool) {
 	fmt.Printf("I am worker %d..\n", val)
 	time.Sleep(time.Second)
 	fmt.Printf("I am worker %d and I am done...\n", val)
 	
 	done <- true
+}*/
+
+func worker(id int, wg *sync.WaitGroup, jobs <-chan int, results chan<- int) {
+
+	defer wg.Done()
+	for j := range jobs {
+		fmt.Printf("Worker [%d] started job [%d]\n", id, j)
+		time.Sleep(time.Second)
+		fmt.Printf("Worker [%d] finished job [%d]\n", id, j)
+		results <- j * 2
+	}
 }
 
 func ping(pings chan<- string) {
@@ -120,6 +134,19 @@ func ping(pings chan<- string) {
 func pong(pings <-chan string, pongs chan<- string) {
 	ping := <-pings
 	pongs <- ping
+}
+
+func incrementAtomicCounter(id int, wg *sync.WaitGroup, counter *uint64) {
+	for i := 0; i < 1000; i++ {
+		atomic.AddUint64(counter, 1)
+		if *counter >= 50000 {
+			break
+		}
+		fmt.Printf("Worker [%d] has incremented the atomic counter to [%d]\n", id, *counter)
+	}
+
+	// Decrement the wait group
+	wg.Done()
 }
 
 func main() {
@@ -388,4 +415,235 @@ func main() {
 			fmt.Println("received", msg3)
 		}	
 	}*/
+
+	// 22. Timeouts
+	/*c1 := make(chan string, 1)
+	go func () {
+		time.Sleep(2 * time.Second)
+		c1 <- "I got the result"
+	}()
+
+	select {
+	case res := <- c1:
+		fmt.Println(res)
+	case <-time.After(time.Second):
+		fmt.Println("Timed out...")
+	}
+
+	c2 := make(chan string, 1)
+
+	go func () {
+		time.Sleep(time.Second)
+		c2 <- "I got the result the second time around!"
+	}()
+
+	select {
+	case res:= <-c2:
+		fmt.Println(res)
+	case <-time.After(2 * time.Second):
+		fmt.Println("Timed out again...")
+	}*/
+
+	// 23. Non-blocking select statements
+	/*messages := make(chan string)
+	
+	go func () {
+		//time.Sleep(time.Second)
+		messages <- "Hello!"
+	}()
+
+	loop:
+	for {
+		select {
+		case res:= <-messages:
+			fmt.Println(res)
+			break loop
+		case <-time.After(2 * time.Second):
+			fmt.Println("Timed out...")
+			break loop
+		default:
+			fmt.Println("No messages received")
+		}
+	}*/
+
+	// 24. Closing Channels 
+	/*jobs := make(chan int, 5)
+	done := make(chan bool, 1)
+
+
+
+	for j := 0; j < 5; j++ {
+		jobs <- j
+		fmt.Printf("Sending job %d\n", j)
+	}
+
+	go func () {
+		for {
+			job, nextJob := <- jobs
+			if nextJob {
+				fmt.Printf("Received job %d\n", job)
+			} else {
+				fmt.Println("Received all jobs!")
+				done <- true
+				return
+			}
+		}
+	} ()
+	close(jobs)
+	fmt.Println("Sent all jobs!")
+
+	// Block until done channel is populated
+	<-done*/
+
+	// 25. Range over channels
+	/*queue := make(chan string, 2)
+	queue <- "one"
+	queue <- "two"
+	close(queue)
+	for elem := range queue {
+		fmt.Println(elem)
+	} */
+
+	// 26. Timers
+	/*duration := 2 * time.Second
+	t1 := time.NewTimer(duration)
+
+	<-t1.C
+
+	fmt.Printf("t1 Fired after [%.f] seconds", duration.Seconds())*/
+
+	// 27. Tickers
+	/*ticker := time.NewTicker(500 * time.Millisecond)
+	done := make(chan bool, 1)
+
+
+	go func () {
+		for {
+			select {
+			case <-done:
+				return
+			case t := <-ticker.C:
+				fmt.Println("Tick at: ", t)
+			}
+		}
+	}()
+
+	time.Sleep(2000 * time.Millisecond)
+	ticker.Stop()
+	done <- true
+
+	fmt.Println("Timer stopped"	)*/
+
+	// 28. Worker Pools
+	/*numJobs := 10
+	jobs := make(chan int, numJobs)
+	results := make(chan int, numJobs)
+	for i := 1; i <= numJobs; i++ {
+		go worker(i, jobs, results)
+	}
+
+	for j:=1; j <= numJobs; j++ {
+		jobs <- j
+	}
+	close(jobs)
+	for a := 1; a <= numJobs; a++ {
+		<-results
+	}*/
+
+	// 29. Wait Groups
+	/*var wg sync.WaitGroup
+
+	numJobs := 10
+	jobs := make(chan int, numJobs)
+	results := make(chan int, numJobs)
+
+	for i := 0; i < numJobs; i++ {
+		wg.Add(1)
+		go worker(i, &wg, jobs, results)
+	}
+
+	for j := 0; j < numJobs; j++ {
+		jobs <- j
+	}
+	close(jobs)
+
+	wg.Wait()*/
+
+	// 30. Rate Limiting
+	/*numRequests := 5
+	requests := make(chan int, numRequests)
+	for i := 0; i < numRequests; i++ {
+		requests <- i
+	}
+
+	limiter := time.Tick(1000 * time.Millisecond)
+
+	for j := 0; j < numRequests; j++ {
+		<-limiter
+		fmt.Printf("Processing request [%d]\n", <-requests)
+	}
+
+	burstLimit := 3
+	burstReqQueue := make(chan time.Time, burstLimit)
+
+	for k := 0; k < burstLimit; k++ {
+		burstReqQueue <- time.Now()
+	}*/
+
+	// 31. Atomic Counters
+	/*var atomicCounter uint64
+	var wg sync.WaitGroup
+	// Start 50 goroutines
+	for workerNum := 0; workerNum < 16; workerNum++ {
+		// Add this process to the wait group
+		wg.Add(1)
+		go incrementAtomicCounter(workerNum, &wg, &atomicCounter)
+	}
+
+	wg.Wait()*/
+
+	// 32. Mutexes
+
+	/*var state = make(map[int]int)
+
+	var mutex = &sync.Mutex{}
+
+	var wg sync.WaitGroup
+
+	var readOps uint64
+	var writeOps uint64
+
+	for w := 0; w < 100; w++ {
+		go func () {
+			wg.Add(1)
+			num := rand.Intn(50)
+			key := rand.Intn(50)
+			mutex.Lock()
+			state[key] = num
+			mutex.Unlock()
+			atomic.AddUint64(&writeOps, 1)
+
+			// Wait between writes
+			time.Sleep(time.Millisecond)
+		} ()
+	}
+	
+	go func () {
+		for r := 0; r < 100; r++ {
+			mutex.Lock()
+			fmt.Println(state[rand.Intn(5)])
+			mutex.Unlock()
+			atomic.AddUint64(&readOps, 1)
+
+			// Wait between reads
+			time.Sleep(time.Millisecond)
+		}
+		
+	} ()
+	time.Sleep(2 * time.Second)
+
+	mutex.Lock()
+	fmt.Println("State map: ", state)
+	mutex.Unlock()*/
 }
+
