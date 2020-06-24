@@ -6,8 +6,11 @@ import (
 	"time"
 	"sync"
 	"sync/atomic"
-	"math/rand"
+	//"math/rand"
+	//"sort"
 	//"strconv"
+	//"os"
+	"regexp"
 )
 
 // 11. Functions
@@ -147,6 +150,109 @@ func incrementAtomicCounter(id int, wg *sync.WaitGroup, counter *uint64) {
 
 	// Decrement the wait group
 	wg.Done()
+}
+
+type readOp struct {
+	key int
+	resp chan int
+}
+
+type writeOp struct {
+	key int
+	val int
+	resp chan bool
+}
+
+type byLength []string
+
+func (s byLength) Len() int {
+	return len(s)
+}
+
+func (s byLength) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func (s byLength) Less(i, j int) bool {
+	return len(s[i]) < len(s[j])
+}
+
+func increment(num *int) {
+	*num++
+}
+
+func zeroOut(num *int) {
+	*num = 0
+}
+
+func runThroughNum(num *int) {
+	defer zeroOut(num)
+	for i := 0; i < 10; i++ {
+		increment(num)
+		fmt.Println("Num is now: ", *num)
+	} 
+}
+
+func Index(vi []int, num int) int {
+	for i, v := range vi {
+		if v == num{
+			return i 
+		}
+	}
+
+	return -1
+}
+
+func Included(vi []int, num int) bool {
+	return Index(vi, num) >= 0
+}
+
+func Any(vi []int, f func(int)bool) bool {
+	for _, v := range vi {
+		if f(v) {
+			return true
+		}
+	}
+	return false
+}
+
+func All(vi []int, f func(int) bool) bool {
+	for _, v := range vi {
+		if !f(v) {
+			return false
+		}
+	}
+	return true
+}
+
+func Filter(vi []int, f func(int) bool) []int {
+	result := make([]int, 0)
+	for _, v := range vi {
+		if f(v) {
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
+func Map(vi []int, f func(int) int) []int {
+	result := make([]int, 0)
+	for _, v := range vi {
+		result = append(result, f(v))
+	}
+	return result
+}
+
+func double(i int) int {
+	return i * 2
+}
+
+func isEven(i int) bool {
+	return i % 2 == 0
+}
+
+func isDivisibleByOne(i int) bool {
+	return i % 1 == 0
 }
 
 func main() {
@@ -645,5 +751,140 @@ func main() {
 	mutex.Lock()
 	fmt.Println("State map: ", state)
 	mutex.Unlock()*/
+
+	// 33. Stateful Goroutines
+	/*var readOps uint64
+	var writeOps uint64
+
+	reads := make(chan readOp)
+	writes := make(chan writeOp)
+
+	go func() {
+		var state = make(map[int]int)
+		for {
+			fmt.Println("I'm about to select")
+			select {
+			case read := <- reads:
+				read.resp <- state[read.key]
+			case write := <- writes:
+				state[write.key] = write.val
+				write.resp <- true
+			}
+		}
+	}()
+	for i := 0; i < 100; i++ {
+		go func() {
+			for {
+				fmt.Println("I'm about to perform a read")
+				read := readOp{
+					key: rand.Intn(5),
+					resp: make(chan int)}
+				// Put the read onto the reads channel
+				reads <- read
+				<-read.resp
+				atomic.AddUint64(&readOps, 1)
+				time.Sleep(time.Millisecond)
+				//fmt.Println("End of innerReadOps ", innerReadOps)
+				//atomic.AddUint64(&innerReadOps, 1)
+			}			
+		} ()
+	}
+	
+	for w := 0; w < 10; w++ {
+        go func() {
+            for {
+				fmt.Println("I'm about to perform a write")
+                write := writeOp{
+                    key:  rand.Intn(5),
+                    val:  rand.Intn(100),
+                    resp: make(chan bool)}
+                writes <- write
+                <-write.resp
+                atomic.AddUint64(&writeOps, 1)
+                time.Sleep(time.Millisecond)
+            }
+        }()
+    }
+
+	time.Sleep(3 * time.Second)
+
+	readOpsFinal := atomic.LoadUint64(&readOps)
+    fmt.Println("readOps:", readOpsFinal)
+    writeOpsFinal := atomic.LoadUint64(&writeOps)
+	fmt.Println("writeOps:", writeOpsFinal)*/
+
+	// 34. Sorting
+	/*ints := []int{5, 2, 8}
+	sort.Ints(ints)
+	fmt.Println("Ints: ", ints)
+
+	strs := []string{"false", "true", "true", "false", "true"}
+	sort.Strings(strs)
+	fmt.Println("Strings: ", strs)*/
+
+	// 35. Sorting By Functions
+	/*names := []string{"Barry", "Evelyn", "Stephen", "Aaron", "Shane"}
+	sort.Sort(byLength(names))
+	fmt.Println(names)*/
+
+	// 36. Panic
+	/*_, err := os.Create("/tmp/file")
+	if err != nil {
+		panic(err)
+	}*/
+
+	// 37. Defer
+	/*num := 0
+	fmt.Println("Num started out as: ", num)
+	runThroughNum(&num)
+	fmt.Println("Num should now be zero: ", num)*/
+
+	// 38. Collection Functions
+	/*nums := []int{1, 2, 3, 4, 5}
+	fmt.Println("The index of 3 in nums is: ",Index(nums, 3))
+	fmt.Println("1024 isn't in the list of number, so we should get -1 as an answer: ", Index(nums, 1024))
+
+	fmt.Printf("It is [%t] that 5 is in the list of nums\n", Included(nums, 5))
+	fmt.Printf("It is [%t] that 9999 is in the list of nums\n", Included(nums, 9999))
+
+	fmt.Printf("It is [%t] that there are even numbers in nums\n", Any(nums, isEven))
+	fmt.Printf("It is [%t] that every number in nums is divisible by one\n", All(nums, isDivisibleByOne))
+
+	fmt.Println("These are all the even nums: ", Filter(nums, isEven))
+
+	fmt.Println("Let's double each number in the list: ", Map(nums, double))*/
+
+	// 39. Strings formatting and functions
+	
+
+	// 40. Regex
+	/*p := fmt.Println
+	match, _ := regexp.MatchString("p([a-z]+)ch", "patch")
+	fmt.Println(match)
+
+	r, _ := regexp.Compile("p([a-z]+)ch")
+
+
+	p(r.MatchString("peach"))
+
+	p(r.FindString("peach punch pouch"))
+
+	p(r.FindStringIndex("peach punch pouch"))
+
+	p(r.FindStringSubmatch("peach punch pouch"))
+
+	p(r.FindStringSubmatchIndex("peach punch pouch"))
+
+	p(r.FindAllString("peach punch pouch", -1))
+
+	p(r.FindAllStringSubmatchIndex("peach punch pouch", -1))
+
+	p(r.Match([]byte("peach")))
+
+	p(r.ReplaceAllString("a peach, a pouch and a punch", "chair"))*/
+
+
+	// 41. JSON
+	
 }
 
