@@ -10,7 +10,20 @@ import (
 	//"sort"
 	//"strconv"
 	//"os"
-	"regexp"
+	//"regexp"
+	//"encoding/json"
+	//"encoding/xml"
+	//"net"
+	//"net/url"
+	//"crypto/sha1"
+	//b64 "encoding/base64"
+	//"bufio"
+	//"io"
+	//"io/ioutil"
+	//"os"
+	//"testing"
+	//"bufio"
+	"net/http"
 )
 
 // 11. Functions
@@ -255,7 +268,71 @@ func isDivisibleByOne(i int) bool {
 	return i % 1 == 0
 }
 
+type HTTPResponse struct {
+	Err int
+	Body string
+}
+
+type HTTPTaggedResponse struct {
+	Err int      `json: "err"`
+	Body string  `json: "body"`
+}
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func StringOverNChars(s string, n int) bool {
+	return len(s) > n
+}
+
+func handler(w http.ResponseWriter, req *http.Request) {
+	fmt.Fprintf(w, "Hello, this is my first go http handler")
+}
+
+/*func TestStringOverNCharsTrue(t *testing.T) {
+	ans := StringOverNChars("This is a string that's over 1 character!", 1)
+	if ans != true {
+		t.Errorf("StringOverNChars(\"This is a string that's over 1 character!\", 1) = %t; want true", ans)
+	}
+}
+
+func TestStringOverNCharsFalse(t *testing.T) {
+	ans := StringOverNChars("This is not a string that's over 1000 characters!", 1000)
+	if ans != false {
+		t.Errorf("StringOverNChars(\"This is not a string that's over 1000 characters!\", 1000) = %t; want false", ans)
+	}
+}
+
+func TestStringOverNCharsDriven(t *testing.T) {
+	var tests = []struct {
+		s string
+		n int
+		want bool
+	}{
+		{"This", 1, true},
+		{"Is", 3, false},
+		{"A", 0, true},
+		{"Test", -1, true},
+		{"In", 10000000, false},
+	}
+
+	for _, tc := range tests {
+		testname := fmt.Sprintf("%s,%d", tc.s, tc.n)
+		t.Run(testname, func(t *testing.T) {
+			ans := StringOverNChars(tc.s, tc.n)
+			if ans != tc.want {
+				t.Errorf("Got %t; want %t", ans, tc.want)
+			}
+		})
+	}
+}*/
+
+
 func main() {
+	//p := fmt.Println
 	// 1. Hello World
 	// fmt.Println("Hello World!")
 
@@ -858,8 +935,7 @@ func main() {
 	
 
 	// 40. Regex
-	/*p := fmt.Println
-	match, _ := regexp.MatchString("p([a-z]+)ch", "patch")
+	/*match, _ := regexp.MatchString("p([a-z]+)ch", "patch")
 	fmt.Println(match)
 
 	r, _ := regexp.Compile("p([a-z]+)ch")
@@ -885,6 +961,272 @@ func main() {
 
 
 	// 41. JSON
+	/*intA, _ := json.Marshal(9999)
+	p(string(intA))
+
+	strA, _ := json.Marshal("This is a string")
+	p(string(strA))
+
+	response := &HTTPResponse{
+		Err: 200,
+		Body: "Stats Call successful"}
+
+	responseBytes, _ := json.Marshal(response)
+	p(string(responseBytes))
+
+	taggedResponse := &HTTPTaggedResponse{
+		Err: 404,
+		Body: "Resource not found"}
+
+	taggedResponseBytes, _ := json.Marshal(taggedResponse)
+	p(string(taggedResponseBytes))
+
+	byt := []byte(`{"num":6.13,"strs":["a","b"]}`)
 	
+	var dat map[string]interface{}
+	
+	if err := json.Unmarshal(byt, &dat); err != nil {
+		panic(err)
+	}
+	p(dat)*/
+
+	//42. XML
+
+	//43. Time
+
+    /*p := fmt.Println
+
+    now := time.Now()
+    p(now)
+
+    then := time.Date(
+        2009, 11, 17, 20, 34, 58, 651387237, time.UTC)
+    p(then)
+
+    p(then.Year())
+    p(then.Month())
+    p(then.Day())
+    p(then.Hour())
+    p(then.Minute())
+    p(then.Second())
+    p(then.Nanosecond())
+    p(then.Location())
+
+    p(then.Weekday())
+
+    p(then.Before(now))
+    p(then.After(now))
+    p(then.Equal(now))
+
+    diff := now.Sub(then)
+    p(diff)
+
+    p(diff.Hours())
+    p(diff.Minutes())
+    p(diff.Seconds())
+    p(diff.Nanoseconds())
+
+    p(then.Add(diff))
+	p(then.Add(-diff))*/
+	
+	// 44. Epoch
+    /*now := time.Now()
+    secs := now.Unix()
+    nanos := now.UnixNano()
+    fmt.Println(now)
+
+    millis := nanos / 1000000
+    fmt.Println(secs)
+    fmt.Println(millis)
+    fmt.Println(nanos)
+
+    fmt.Println(time.Unix(secs, 0))
+	fmt.Println(time.Unix(0, nanos))*/
+	
+	//45. Time parsing/formatting
+
+    /*t := time.Now()
+    p(t.Format(time.RFC3339))
+
+    t1, e := time.Parse(
+        time.RFC3339,
+        "2012-11-01T22:08:41+00:00")
+    p(t1)
+
+    p(t.Format("3:04PM"))
+    p(t.Format("Mon Jan _2 15:04:05 2006"))
+    p(t.Format("2006-01-02T15:04:05.999999-07:00"))
+    form := "3 04 PM"
+    t2, e := time.Parse(form, "8 41 PM")
+    p(t2)
+
+    fmt.Printf("%d-%02d-%02dT%02d:%02d:%02d-00:00\n",
+        t.Year(), t.Month(), t.Day(),
+        t.Hour(), t.Minute(), t.Second())
+
+    ansic := "Mon Jan _2 15:04:05 2006"
+    _, e = time.Parse(ansic, "8:41PM")
+	p(e)*/
+	
+	// 46. Random numbers
+    /*fmt.Print(rand.Intn(100), ",")
+    fmt.Print(rand.Intn(100))
+    fmt.Println()
+
+    fmt.Println(rand.Float64())
+
+    fmt.Print((rand.Float64()*5)+5, ",")
+    fmt.Print((rand.Float64() * 5) + 5)
+    fmt.Println()
+
+    s1 := rand.NewSource(time.Now().UnixNano())
+    r1 := rand.New(s1)
+
+    fmt.Print(r1.Intn(100), ",")
+    fmt.Print(r1.Intn(100))
+    fmt.Println()
+
+    s2 := rand.NewSource(42)
+    r2 := rand.New(s2)
+    fmt.Print(r2.Intn(100), ",")
+    fmt.Print(r2.Intn(100))
+    fmt.Println()
+    s3 := rand.NewSource(42)
+    r3 := rand.New(s3)
+    fmt.Print(r3.Intn(100), ",")
+	fmt.Print(r3.Intn(100))*/
+	
+	// 47. Number Parsing
+    /*f, _ := strconv.ParseFloat("1.234", 64)
+    fmt.Println(f)
+
+    i, _ := strconv.ParseInt("123", 0, 64)
+    fmt.Println(i)
+
+    d, _ := strconv.ParseInt("0x1c8", 0, 64)
+    fmt.Println(d)
+
+    u, _ := strconv.ParseUint("789", 0, 64)
+    fmt.Println(u)
+
+    k, _ := strconv.Atoi("135")
+    fmt.Println(k)
+
+    _, e := strconv.Atoi("wat")
+	fmt.Println(e)*/
+	
+	// 48. URL Parsing
+	/*s := "https://user:pass@127.0.0.1:8080/home?k=v#f"
+
+	u, err := url.Parse(s)
+    if err != nil {
+        panic(err)
+	}
+	
+	fmt.Println(u.Scheme)
+
+	fmt.Println(u.User)
+	fmt.Println(u.User.Username())
+	
+	pass, _ := u.User.Password()
+    fmt.Println(pass)
+
+	host, port, _ := net.SplitHostPort(u.Host)
+	p(host, port)
+
+	fmt.Println(u.Path)
+
+	fmt.Println(u.Fragment)
+
+	fmt.Println(u.RawQuery)
+    m, _ := url.ParseQuery(u.RawQuery)
+    fmt.Println(m)
+	fmt.Println(m["k"][0])*/
+	
+
+	// 49. SHA1 Hashes
+	/*s := "This is the string I want to hash"
+
+	h := sha1.New()
+	p(s, h)
+
+	h.Write([]byte(s))
+	p(s, h)
+
+	bs := h.Sum(nil)
+	p(bs)
+	fmt.Printf("%x\n", bs)*/
+
+	// 50. b64Encoding
+	/*data := "I want to encode this data, plz"
+	encodedData := b64.StdEncoding.EncodeToString([]byte(data))
+	p(encodedData)
+
+	decodedData, _ := b64.StdEncoding.DecodeString(encodedData)
+	p(string(decodedData))*/
+
+	// 51. Reading a file
+	/*fileName := "testFile"
+
+	dat, err := ioutil.ReadFile(fileName)
+	check(err)
+	p(string(dat))
+
+	f, err := os.Open(fileName)
+	check(err)
+
+	byteBuffer1 := make([]byte, 2)
+	n1, err := f.Read(byteBuffer1)
+	check(err)
+	fmt.Printf("%d bytes: %s\n", n1, string(byteBuffer1))
+
+	seekPos, err := f.Seek(6, 0)
+	check(err)
+	byteBuffer2 := make([]byte, 1)
+	n2, err := f.Read(byteBuffer2)
+	check(err)
+	fmt.Printf("%d bytes @ %d: ", n2, seekPos)
+	fmt.Printf("%v\n", string(byteBuffer2[:n2]))
+
+	f.Close()*/
+
+	//52. Line Filter
+
+	/*scanner := bufio.NewScanner(os.Stdin)
+
+	for scanner.Scan() {
+		bsl := []byte(scanner.Text())
+		p(bsl)
+	}
+
+	if err := scanner.Err(); err != nil {
+        fmt.Fprintln(os.Stderr, "error:", err)
+        os.Exit(1)
+	}*/
+	
+	// 53. Testing
+	// Testing funcs above
+
+	// 54. HTTP Clients
+	/*resp, err := http.Get("http://google.com")
+
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	fmt.Println("Response status:", resp.Status)
+	
+	scanner := bufio.NewScanner(resp.Body)
+    for i := 0; scanner.Scan() && i < 5; i++ {
+        fmt.Println(scanner.Text())
+    }
+    if err := scanner.Err(); err != nil {
+        panic(err)
+	}*/
+	
+	http.HandleFunc("/handle", handler)
+
+	http.ListenAndServe(":8000", nil)
 }
 
